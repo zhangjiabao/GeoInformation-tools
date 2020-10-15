@@ -22,7 +22,10 @@
       @deleteIndex="del"
       @uploadData="getData"
     ></QuestionItem>
-    <ShareImg class="share-block"></ShareImg>
+    <!-- <ShareImg class="share-block"></ShareImg> -->
+    <van-row type="flex" justify="center">
+      <van-button class="share-block" size="large" type="info" @click="getListData">提交</van-button>
+    </van-row>
   </div>
 </template>
 
@@ -35,7 +38,8 @@ import { Col, Row } from "vant";
 import { Button, Icon } from "vant";
 import { Field } from "vant";
 import { NavBar } from "vant";
-
+import VueResource from "vue-resource";
+Vue.use(VueResource);
 Vue.use(ShareImg);
 Vue.use(NavBar);
 Vue.use(Field);
@@ -45,8 +49,8 @@ Vue.use(Row);
 Vue.use(Icon);
 export default {
   components: {
-    QuestionItem,
-    ShareImg
+    QuestionItem
+    // ShareImg
   },
   props: {
     msg: String
@@ -64,14 +68,39 @@ export default {
       //  not allow to delete the first
       if (index !== 0) {
         this.items.splice(index, 1);
-        console.log("deleted:", JSON.stringify(this.items));
       }
     },
     //  get the data from child
     getData: function(val) {
       let index = val.index;
       this.items[index] = val.data;
-      console.log("I got the data:", JSON.stringify(this.items));
+    },
+
+    getListData() {
+      //网络请求数据
+      var url = "/api/question/submit";
+      //jsonp请求，需要后台接口支持jsonp
+      // this.$http.jsonp(api).then((response)=>{
+      //post请求
+      var total = this.items.length;
+      var questions = [];
+      for (let i = 0; i < this.items.length; i++) {
+        const element = JSON.stringify(this.items[i]);
+        var question = { id: 0, question: "" };
+        question.id = i;
+        question.question = element;
+        questions.push(question);
+      }
+
+      this.$http.post(url, { total: total, questions: questions }).then(
+        response => {
+          console.log("请求到的数据：" + JSON.stringify(response.body));
+          this.list = response.body.result;
+        },
+        error => {
+          console.log("请求错误：" + error);
+        }
+      );
     }
   }
 };
